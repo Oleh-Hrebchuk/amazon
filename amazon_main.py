@@ -1,6 +1,10 @@
-import urllib.request
-from time import sleep
+import os
+import re
+import csv
 import zipfile
+import urllib.request
+
+from time import sleep
 
 
 def url(year, day):
@@ -19,3 +23,17 @@ for day in dates:
 for day in dates:
     with zipfile.ZipFile('{}{}-{}.zip'.format(download_folder, year, day), "r") as zip_ref:
         zip_ref.extractall("unzipped_files")
+
+csv_files = [unzipped_files + '/' + file for file in os.listdir(unzipped_files)]
+pattern = re.compile(r'v1:\d+:\d+:\d+:\w+-\w+-\w+-\w+-\w+\Z')
+data = []
+
+for file in csv_files:
+    with open(file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if pattern.match(row['user:scalr-meta']):
+                data.append({
+                    'user:scalr-meta': row['user:scalr-meta'],
+                    'Cost': row['Cost']
+                })

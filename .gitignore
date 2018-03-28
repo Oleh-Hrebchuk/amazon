@@ -2,6 +2,7 @@
 __pycache__/
 *.zip
 *.csv
+*.csv#
 *.py[cod]
 *$py.class
 #db
