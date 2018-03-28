@@ -11,7 +11,6 @@ dates = ['05', '06', '07', '08']
 download_folder = 'download/'
 
 for day in dates:
-    print(url(year, day))
     urllib.request.urlretrieve(url(year, day), '{}{}-{}.zip'.format(download_folder, year, day))
     sleep(5)
 
