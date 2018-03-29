@@ -1,28 +1,40 @@
 import os
 import re
 import csv
-import zipfile
-import urllib.request
+from queue import Queue
 
-from time import sleep
-
-
-def url(year, day):
-    return 'https://s3.amazonaws.com/detailed-billing-test/615271354814-aws-billing-detailed-line-items-with-resources-and-tags-{}-{}.csv.zip'.format(year, day)
-
+from download_files import DownloadFiles
+from unzip_files import UnzipFiles
 
 year = '2016'
 dates = ['05', '06', '07', '08']
 download_folder = 'downloads/'
 unzipped_files = 'unzipped_files'
 
-for day in dates:
-    urllib.request.urlretrieve(url(year, day), '{}{}-{}.zip'.format(download_folder, year, day))
-    sleep(5)
 
-for day in dates:
-    with zipfile.ZipFile('{}{}-{}.zip'.format(download_folder, year, day), "r") as zip_ref:
-        zip_ref.extractall("unzipped_files")
+# download
+queue = Queue()
+for i in range(len(dates)):
+    d = DownloadFiles(queue, year, download_folder)
+    d.setDaemon(True)
+    d.start()
+
+for url in dates:
+    queue.put(url)
+
+queue.join()
+
+# unzip
+queue_unzip = Queue()
+for i in range(len(dates)):
+    d = UnzipFiles(queue_unzip, year, download_folder, unzipped_files)
+    d.setDaemon(True)
+    d.start()
+
+for url in dates:
+    queue_unzip.put(url)
+
+queue_unzip.join()
 
 csv_files = [unzipped_files + '/' + file for file in os.listdir(unzipped_files)]
 pattern = re.compile(r'v1:\d+:\d+:\d+:\w+-\w+-\w+-\w+-\w+\Z')
